@@ -51,20 +51,25 @@ void preencher_estruturas(fila_t *f, heap_t *h) {
 
     char value[50];
     int key;
+    int count = 0;
 
     while (fscanf(arq, "%d/%49s", &key, value) == 2) {
-        item_t item;
-        item.key = key;
-        item.value = strdup(value);
+        count++;
 
-        if (item.value == NULL) {
-            fprintf(stderr, "Erro ao alocar memória para string\n");
-            continue;
-        }
+        // Para a fila
+        item_t item_fila;
+        item_fila.key = key;
+        item_fila.value = strdup(value);
+        insert_node_f(f, item_fila);
 
-        insert_node_f(f, item);
-        add_item(h, item);
+        // Para o heap
+        item_t item_heap;
+        item_heap.key = key;
+        item_heap.value = strdup(value);
+        add_item(h, item_heap);
     }
+
+    printf("Carregados %d itens do arquivo\n", count);
     fclose(arq);
 }
 
@@ -79,21 +84,14 @@ void realizar_testes(fila_t *f, heap_t *h, int num_remocoes,
     if (max_remocoes > f->size) max_remocoes = f->size;
     if (max_remocoes > h->size) max_remocoes = h->size;
 
+    // Remove apenas do heap - NÃO LIBERA A MEMÓRIA AQUI
     for (int i = 0; i < max_remocoes; i++) {
-        // Remove do heap
-        item_t item_heap = remove_item(h);
-        if (item_heap.value) {
-            free(item_heap.value);
-        }
+        remove_item(h);  // Não libera o value aqui
+    }
 
-        // Remove da fila
-        node_f *node_fila = remove_node_f(f);
-        if (node_fila) {
-            if (node_fila->item.value) {
-                free(node_fila->item.value);
-            }
-            free(node_fila);
-        }
+    // Remove apenas da fila - NÃO LIBERA A MEMÓRIA AQUI
+    for (int i = 0; i < max_remocoes; i++) {
+        remove_node_f(f);  // Não libera o value aqui
     }
 
     *comp_heap = h->comparacoes;
